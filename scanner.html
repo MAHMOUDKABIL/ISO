@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الفحص الذكي الموحد — ديوان المُراجِع</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">د</span>
+      <span class="brand-txt">ديوان المُراجِع<small>أدوات تدقيق احترافية</small></span>
+    </a>
+    <nav>
+      <a href="index.html"><b>٠١</b><span>الرئيسية</span></a>
+      <a href="scanner.html"><b>٠٢</b><span>الفحص الذكي الموحد</span></a>
+      <a href="benford.html"><b>٠٣</b><span>تحليل قانون بنفور</span></a>
+      <a href="ratios.html"><b>٠٤</b><span>النسب المالية</span></a>
+      <a href="duplicates.html"><b>٠٥</b><span>كشف التكرارات</span></a>
+      <a href="sampling.html"><b>٠٦</b><span>عيّنات التدقيق</span></a>
+    </nav>
+    <div class="side-foot"><b>إعداد: د. محمود الباز قابيل</b>محاسب ومراجع قانوني</div>
+  </aside>
+
+  <main class="main">
+    <header class="page-head" data-num="٠٢">
+      <span class="crumb">العُدّة / الفحص الذكي</span>
+      <h1>الفحص الذكي الموحد</h1>
+      <p>تعمل ثلاث خوارزميات تعلم آلي <b>غير مُشرِف</b> معًا على نفس البيانات: غابة العزل تكتشف الأنماط الشاذة، ومعيار Z يقيس البعد عن المتوسط، والمدى الربيعي IQR يضبط الحدود الإحصائية — وتُدمج النتائج في درجة خطورة واحدة لكل عملية.</p>
+    </header>
+
+    <section class="methods reveal">
+      <div class="method"><span class="w">60%</span><h4>غابة العزل</h4><small>Isolation Forest</small><p>150 شجرة عزل تكتشف العمليات الخارجة عن النمط دون بيانات مُصنَّفة.</p></div>
+      <div class="method"><span class="w">25%</span><h4>معيار Z</h4><small>Z-Score</small><p>يقيس بُعد كل مبلغ عن متوسط السجل بالانحرافات المعيارية.</p></div>
+      <div class="method"><span class="w">15%</span><h4>المدى الربيعي</h4><small>IQR</small><p>يحدد العمليات الواقعة خارج الحدود الإحصائية المقبولة.</p></div>
+    </section>
+
+    <form class="panel reveal no-print" id="scanForm">
+      <div class="form-grid">
+        <label class="drop" id="dropZone">
+          <input type="file" id="fileIn" accept=".xlsx,.xls,.csv,.txt" hidden>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 16V4m0 0 4 4m-4-4L8 8"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          <b>ارفع ملف البيانات</b>
+          <small>يدعم XLSX · XLS · CSV · TXT</small>
+        </label>
+        <div class="field">
+          <label>أو الصق البيانات مباشرة (CSV)</label>
+          <textarea id="textIn" rows="5" placeholder="رقم الفاتورة,المورد,المبلغ&#10;INV-1001,شركة النخيل,4800&#10;INV-1002,مؤسسة الأفق,2450"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field small">
+          <label>حساسية الفحص</label>
+          <select id="contamination">
+            <option value="0.05">منخفضة — 5%</option>
+            <option value="0.08" selected>قياسية — 8%</option>
+            <option value="0.12">مرتفعة — 12%</option>
+            <option value="0.15">قصوى — 15%</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button class="btn" type="submit">تشغيل الفحص الموحد</button>
+          <button class="btn ghost" type="button" id="demoBtn">بيانات تجريبية</button>
+          <button class="btn ghost" type="button" id="tplXlsx">تحميل نموذج XLSX</button>
+          <button class="btn ghost" type="button" id="tplCsv">نموذج CSV</button>
+        </div>
+      </div>
+    </form>
+
+    <div id="error" class="alert" style="display:none"></div>
+    <div id="result"></div>
+
+    <footer class="foot">
+      <span><b>ديوان المُراجِع</b> — إعداد د. محمود الباز قابيل، محاسب ومراجع قانوني.</span>
+      <span>Vanilla JS × CSS</span>
+    </footer>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+const $=s=>document.querySelector(s), T=AuditorTools;
+const errBox=$('#error'), resBox=$('#result');
+let fileRows=null;
+
+$('#tplXlsx').addEventListener('click',T.downloadTemplateXLSX);
+$('#tplCsv').addEventListener('click',T.downloadTemplateCSV);
+$('#dropZone').addEventListener('click',()=>$('#fileIn').click());
+$('#dropZone').addEventListener('dragover',e=>{e.preventDefault();$('#dropZone').classList.add('dragover');});
+$('#dropZone').addEventListener('dragleave',()=>$('#dropZone').classList.remove('dragover'));
+$('#dropZone').addEventListener('drop',async e=>{
+  e.preventDefault();$('#dropZone').classList.remove('dragover');
+  if(e.dataTransfer.files[0]) await loadFile(e.dataTransfer.files[0]);
+});
+$('#fileIn').addEventListener('change',e=>{if(e.target.files[0])loadFile(e.target.files[0]);});
+
+async function loadFile(f){
+  try{
+    fileRows=await T.readWorkbook(f);
+    $('#dropZone b').textContent='✓ '+f.name;
+    $('#dropZone small').textContent=fileRows.length+' صفًا جاهزًا للفحص';
+  }catch(err){showError(err.message);}
+}
+
+$('#scanForm').addEventListener('submit',e=>{e.preventDefault();run(false);});
+$('#demoBtn').addEventListener('click',()=>run(true));
+
+function showError(msg){errBox.textContent='⚠ '+msg;errBox.style.display='block';resBox.innerHTML='';}
+
+async function run(demo){
+  errBox.style.display='none';resBox.innerHTML='';
+  try{
+    let records;
+    if(demo) records=T.demoData(60);
+    else if(fileRows) records=T.normalizeRecords(fileRows);
+    else{
+      const src=$('#textIn').value;
+      if(!src.trim())throw new Error('ارفع ملفًا أو الصق بيانات أو استخدم البيانات التجريبية.');
+      records=T.normalizeRecords(T.parseCSV(src));
+    }
+    if(records.length<5)throw new Error('البيانات قليلة جدًا — الفحص يتطلب 5 صفوف على الأقل.');
+    const cont=parseFloat($('#contamination').value);
+    const rows=T.ensembleScan(records,cont);
+    const total=T.sum(rows.map(r=>r.amount));
+    const high=rows.filter(r=>r.risk>=70), mid=rows.filter(r=>r.risk>=40&&r.risk<70);
+    const flagAmount=T.sum(high.map(r=>r.amount));
+    const verdict=high.length
+      ? `يوجد ${high.length} عملية بخطورة مرتفعة تتطلب فحصًا مستنديًا موسعًا، و${mid.length} عملية بخطورة متوسطة يُنصح بمراجعتها.`
+      : 'لم تُسجَّل عمليات بخطورة مرتفعة — يُكتفى بإجراءات المراجعة الاعتيادية.';
+
+    resBox.innerHTML=`
+      <section class="panel reveal">
+        <div class="report-head">
+          <div><h2>تقرير الفحص الذكي الموحد</h2><small>ديوان المُراجِع — ${T.AUDITOR.name}، ${T.AUDITOR.title}</small></div>
+          <div><small>تاريخ التقرير</small><b>${T.todayAr()}</b></div>
+        </div>
+
+        <div class="verdict ${high.length?(high.length>3?'bad':'warn'):'ok'}">
+          <div><small>الخلاصة المهنية</small><h2>${verdict}</h2></div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi"><small>عدد العمليات</small><b>${rows.length}</b></div>
+          <div class="kpi"><small>إجمالي المبالغ</small><b>${T.fmt(total,0)}</b></div>
+          <div class="kpi"><small>خطورة مرتفعة</small><b>${high.length} <i class="sub">(${(high.length/rows.length*100).toFixed(1)}٪)</i></b></div>
+          <div class="kpi"><small>خطورة متوسطة</small><b>${mid.length}</b></div>
+          <div class="kpi"><small>قيمة العمليات المرتفعة</small><b>${T.fmt(flagAmount,0)}</b></div>
+        </div>
+
+        <h2 class="ptitle">نتائج الفحص <small>منهجية مدمجة: عزل 60% + Z 25% + IQR 15% — مرتبة حسب درجة الخطورة</small></h2>
+        <div class="twrap">
+          <table class="tbl">
+            <thead><tr><th>الرقم</th><th>البيان / المورد</th><th>المبلغ</th><th>درجة العزل</th><th>Z</th><th>مدى IQR</th><th>درجة الخطورة</th><th>المستوى</th></tr></thead>
+            <tbody>
+              ${rows.slice(0,100).map(r=>{
+                const [cls,tag]=T.riskLevel(r.risk);
+                return `<tr class="${cls==='hi'?'hit':''}">
+                  <td>${r.id}</td><td>${r.label}</td>
+                  <td class="num">${T.fmt(r.amount,2)}</td>
+                  <td>${r.score}</td><td>${r.z}</td>
+                  <td>${r.outIQR?'<span class="badge mid">خارج المدى</span>':'<span class="badge lo">داخل المدى</span>'}</td>
+                  <td><div class="meter"><i style="width:${r.risk}%"></i></div></td>
+                  <td><span class="badge ${cls}">${tag}</span></td>
+                </tr>`;}).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sig-line">
+          <div><b>${T.AUDITOR.name}</b>${T.AUDITOR.title}</div>
+          <div>التوقيع: ______________________</div>
+        </div>
+      </section>
+      <div class="form-row no-print">
+        <span></span>
+        <div class="actions"><button class="btn" type="button" onclick="window.print()">طباعة التقرير / حفظ PDF</button></div>
+      </div>`;
+  }catch(err){showError(err.message);}
+}
+</script>
+</body>
+</html>

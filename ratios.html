@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>النسب المالية — ديوان المُراجِع</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="index.html"><span class="brand-mark">د</span><span class="brand-txt">ديوان المُراجِع<small>أدوات تدقيق احترافية</small></span></a>
+    <nav>
+      <a href="index.html"><b>٠١</b><span>الرئيسية</span></a>
+      <a href="scanner.html"><b>٠٢</b><span>الفحص الذكي الموحد</span></a>
+      <a href="benford.html"><b>٠٣</b><span>تحليل قانون بنفور</span></a>
+      <a href="ratios.html"><b>٠٤</b><span>النسب المالية</span></a>
+      <a href="duplicates.html"><b>٠٥</b><span>كشف التكرارات</span></a>
+      <a href="sampling.html"><b>٠٦</b><span>عيّنات التدقيق</span></a>
+    </nav>
+    <div class="side-foot"><b>إعداد: د. محمود الباز قابيل</b>محاسب ومراجع قانوني</div>
+  </aside>
+
+  <main class="main">
+    <header class="page-head" data-num="٠٤">
+      <span class="crumb">العُدّة / التحليل المالي</span>
+      <h1>تحليل النسب المالية</h1>
+      <p>أدخل بنود القوائم المالية لفترتين مقارنتين، وتحصل فورًا على نسب السيولة والمديونية والربحية والدوران مع تقييم مهني واتجاه التغير لكل نسبة.</p>
+    </header>
+
+    <form class="panel reveal no-print" id="rForm">
+      <h2 class="ptitle">بنود القوائم المالية <small>الفترة الحالية مقابل الفترة السابقة</small></h2>
+      <div class="form-grid three">
+        <div class="field"><label>الأصول المتداولة</label><input type="number" id="ca" value="850000"><input type="number" id="ca2" value="720000" style="margin-top:8px" placeholder="الفترة السابقة"></div>
+        <div class="field"><label>المخزون</label><input type="number" id="inv" value="300000"><input type="number" id="inv2" value="280000" style="margin-top:8px" placeholder="الفترة السابقة"></div>
+        <div class="field"><label>الخصوم المتداولة</label><input type="number" id="cl" value="400000"><input type="number" id="cl2" value="390000" style="margin-top:8px" placeholder="الفترة السابقة"></div>
+        <div class="field"><label>إجمالي الأصول</label><input type="number" id="ta" value="2500000"><input type="number" id="ta2" value="2300000" style="margin-top:8px" placeholder="الفترة السابقة"></div>
+        <div class="field"><label>إجمالي الخصوم</label><input type="number" id="tl" value="1200000"><input type="number" id="tl2" value="1150000" style="margin-top:8px" placeholder="الفترة السابقة"></div>
+        <div class="field"><label>حقوق الملكية</label><input type="number" id="eq" value="1300000"><input type="number" id="eq2" value="1150000" style="margin-top:8px" placeholder="الفترة السابقة"></div>
+        <div class="field"><label>الإيرادات</label><input type="number" id="rev" value="1800000"><input type="number" id="rev2" value="1600000" style="margin-top:8px" placeholder="الفترة السابقة"></div>
+        <div class="field"><label>تكلفة المبيعات</label><input type="number" id="cogs" value="1100000"><input type="number" id="cogs2" value="1000000" style="margin-top:8px" placeholder="الفترة السابقة"></div>
+        <div class="field"><label>صافي الربح</label><input type="number" id="ni" value="240000"><input type="number" id="ni2" value="200000" style="margin-top:8px" placeholder="الفترة السابقة"></div>
+      </div>
+      <div class="form-row">
+        <span></span>
+        <div class="actions">
+          <button class="btn" type="submit">احتساب النسب</button>
+          <button class="btn ghost" type="reset">مسح الحقول</button>
+        </div>
+      </div>
+    </form>
+
+    <div id="error" class="alert" style="display:none"></div>
+    <div id="result"></div>
+
+    <footer class="foot">
+      <span><b>ديوان المُراجِع</b> — إعداد د. محمود الباز قابيل، محاسب ومراجع قانوني.</span>
+      <span>Vanilla JS × CSS</span>
+    </footer>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+const $=s=>document.querySelector(s), T=AuditorTools;
+const errBox=$('#error'), resBox=$('#result');
+const num=id=>{const v=parseFloat($(id).value);return isNaN(v)?0:v;};
+
+$('#rForm').addEventListener('submit',e=>{
+  e.preventDefault();errBox.style.display='none';
+  try{
+    const P={cur:{ca:num('#ca'),inv:num('#inv'),cl:num('#cl'),ta:num('#ta'),tl:num('#tl'),eq:num('#eq'),rev:num('#rev'),cogs:num('#cogs'),ni:num('#ni')},
+             prv:{ca:num('#ca2'),inv:num('#inv2'),cl:num('#cl2'),ta:num('#ta2'),tl:num('#tl2'),eq:num('#eq2'),rev:num('#rev2'),cogs:num('#cogs2'),ni:num('#ni2')}};
+    if(P.cur.cl===0||P.cur.ta===0||P.cur.eq===0||P.cur.rev===0)
+      throw new Error('لا يمكن القسمة على صفر — راجع بنود الخصوم المتداولة والأصول والإيرادات.');
+
+    const defs=[
+      {name:'النسبة الحالية',f:p=>p.ca/p.cl,fmt:v=>v.toFixed(2)+' : 1',good:v=>v>=2?['ok','ممتازة']:v>=1?['warn','مقبولة — تحتاج متابعة']:['bad','أقل من 1 — خطر سيولة'],rev:false},
+      {name:'النسبة السريعة',f:p=>(p.ca-p.inv)/p.cl,fmt:v=>v.toFixed(2)+' : 1',good:v=>v>=1?['ok','جيدة']:['warn','أقل من 1 — تعتمد على المخزون'],rev:false},
+      {name:'نسبة المديونية',f:p=>p.tl/p.ta*100,fmt:v=>v.toFixed(1)+'٪',good:v=>v<=50?['ok','في حدود آمنة']:v<=70?['warn','مرتفعة نسبيًا']:['bad','مديونية مرتفعة'],rev:true},
+      {name:'الخصوم إلى حقوق الملكية',f:p=>p.tl/p.eq,fmt:v=>v.toFixed(2)+' : 1',good:v=>v<=1?['ok','هيكل تمويلي متوازن']:v<=2?['warn','اعتماد كبير على الديون']:['bad','مخاطر تمويلية'],rev:true},
+      {name:'هامش صافي الربح',f:p=>p.ni/p.rev*100,fmt:v=>v.toFixed(1)+'٪',good:v=>v>=15?['ok','ربحية قوية']:v>=5?['warn','ربحية متوسطة']:['bad','ربحية ضعيفة'],rev:false},
+      {name:'هامش مجمل الربح',f:p=>(p.rev-p.cogs)/p.rev*100,fmt:v=>v.toFixed(1)+'٪',good:v=>v>=30?['ok','جيد']:v>=15?['warn','متوسط']:['bad','منخفض'],rev:false},
+      {name:'العائد على الأصول ROA',f:p=>p.ni/p.ta*100,fmt:v=>v.toFixed(1)+'٪',good:v=>v>=10?['ok','كفاءة عالية']:v>=5?['warn','كفاءة متوسطة']:['bad','كفاءة منخفضة'],rev:false},
+      {name:'العائد على حقوق الملكية ROE',f:p=>p.ni/p.eq*100,fmt:v=>v.toFixed(1)+'٪',good:v=>v>=15?['ok','عائد ممتاز']:v>=8?['warn','عائد مقبول']:['bad','عائد ضعيف'],rev:false},
+      {name:'دوران الأصول',f:p=>p.rev/p.ta,fmt:v=>v.toFixed(2)+' مرة',good:v=>v>=1?['ok','استغلال جيد']:['warn','أقل من مرة — أصول معطلة'],rev:false},
+      {name:'دوران المخزون',f:p=>p.inv>0?p.cogs/p.inv:0,fmt:v=>v.toFixed(2)+' مرة',good:v=>v>=4?['ok','حركة جيدة']:v>=2?['warn','بطء نسبي']:['bad','مخزون راكد'],rev:false},
+    ];
+
+    const rows=defs.map(d=>{
+      const cv=d.f(P.cur),pv=d.f(P.prv);
+      const diff=cv-pv, better=d.rev?diff<=0:diff>=0;
+      const [lvl,tag]=d.good(cv);
+      return {name:d.name,c:d.fmt(cv),p:d.fmt(pv),diff,better,lvl,tag};
+    });
+
+    resBox.innerHTML=`
+      <section class="panel reveal">
+        <div class="report-head">
+          <div><h2>تقرير تحليل النسب المالية</h2><small>ديوان المُراجِع — ${T.AUDITOR.name}، ${T.AUDITOR.title}</small></div>
+          <div><small>تاريخ التقرير</small><b>${T.todayAr()}</b></div>
+        </div>
+        <div class="twrap">
+          <table class="tbl">
+            <thead><tr><th>النسبة</th><th>الفترة الحالية</th><th>الفترة السابقة</th><th>التغير</th><th>التقييم المهني</th></tr></thead>
+            <tbody>
+              ${rows.map(r=>`
+                <tr class="${r.lvl==='bad'?'hit':''}">
+                  <td><b>${r.name}</b></td>
+                  <td class="num">${r.c}</td>
+                  <td>${r.p}</td>
+                  <td class="${r.better?'up':'down'}">${r.better?'▲':'▼'} ${Math.abs(r.diff).toFixed(2)}</td>
+                  <td><span class="badge ${r.lvl}">${r.tag}</span></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <p class="note" style="margin-top:14px">ملاحظة مهنية: تُقرأ النسب في سياقها القطاعي، وهذه التقييمات إرشادية وفقًا للمعايير العامة المتعارف عليها.</p>
+        <div class="sig-line">
+          <div><b>${T.AUDITOR.name}</b>${T.AUDITOR.title}</div>
+          <div>التوقيع: ______________________</div>
+        </div>
+      </section>
+      <div class="form-row no-print">
+        <span></span>
+        <div class="actions"><button class="btn" type="button" onclick="window.print()">طباعة التقرير / حفظ PDF</button></div>
+      </div>`;
+  }catch(err){errBox.textContent='⚠ '+err.message;errBox.style.display='block';resBox.innerHTML='';}
+});
+</script>
+</body>
+</html>

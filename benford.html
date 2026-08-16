@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تحليل قانون بنفور — ديوان المُراجِع</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="index.html"><span class="brand-mark">د</span><span class="brand-txt">ديوان المُراجِع<small>أدوات تدقيق احترافية</small></span></a>
+    <nav>
+      <a href="index.html"><b>٠١</b><span>الرئيسية</span></a>
+      <a href="scanner.html"><b>٠٢</b><span>الفحص الذكي الموحد</span></a>
+      <a href="benford.html"><b>٠٣</b><span>تحليل قانون بنفور</span></a>
+      <a href="ratios.html"><b>٠٤</b><span>النسب المالية</span></a>
+      <a href="duplicates.html"><b>٠٥</b><span>كشف التكرارات</span></a>
+      <a href="sampling.html"><b>٠٦</b><span>عيّنات التدقيق</span></a>
+    </nav>
+    <div class="side-foot"><b>إعداد: د. محمود الباز قابيل</b>محاسب ومراجع قانوني</div>
+  </aside>
+
+  <main class="main">
+    <header class="page-head" data-num="٠٣">
+      <span class="crumb">العُدّة / الاختبارات الإحصائية</span>
+      <h1>تحليل قانون بنفور</h1>
+      <p>في البيانات الطبيعية يظهر الرقم الأول «1» بنسبة 30٪ تقريبًا. أي انحراف جوهري عن هذا التوزيع قد يشير إلى أرقام مُختلَقة — اختبار معتمد دوليًا في تدقيق الاحتيال.</p>
+    </header>
+
+    <form class="panel reveal no-print" id="bfForm">
+      <div class="form-grid">
+        <label class="drop" id="dropZone">
+          <input type="file" id="fileIn" accept=".xlsx,.xls,.csv,.txt" hidden>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 16V4m0 0 4 4m-4-4L8 8"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          <b>ارفع ملف المبالغ</b>
+          <small>يدعم XLSX · XLS · CSV · TXT</small>
+        </label>
+        <div class="field">
+          <label>أو الصق البيانات مباشرة</label>
+          <textarea id="textIn" rows="5" placeholder="رقم الفاتورة,البيان,المبلغ&#10;1,توريدات,4800&#10;2,صيانة,1250"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <span></span>
+        <div class="actions">
+          <button class="btn" type="submit">تشغيل التحليل</button>
+          <button class="btn ghost" type="button" id="demoBtn">بيانات تجريبية</button>
+        </div>
+      </div>
+    </form>
+
+    <div id="error" class="alert" style="display:none"></div>
+    <div id="result"></div>
+
+    <footer class="foot">
+      <span><b>ديوان المُراجِع</b> — إعداد د. محمود الباز قابيل، محاسب ومراجع قانوني.</span>
+      <span>Vanilla JS × CSS</span>
+    </footer>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+const $=s=>document.querySelector(s), T=AuditorTools;
+const errBox=$('#error'), resBox=$('#result');
+let fileRows=null;
+
+$('#dropZone').addEventListener('click',()=>$('#fileIn').click());
+$('#fileIn').addEventListener('change',async e=>{
+  if(!e.target.files[0])return;
+  try{fileRows=await T.readWorkbook(e.target.files[0]);
+    $('#dropZone b').textContent='✓ '+e.target.files[0].name;}
+  catch(err){errBox.textContent='⚠ '+err.message;errBox.style.display='block';}
+});
+$('#bfForm').addEventListener('submit',e=>{e.preventDefault();run(false);});
+$('#demoBtn').addEventListener('click',()=>run(true));
+
+function run(demo){
+  errBox.style.display='none';resBox.innerHTML='';
+  try{
+    let records;
+    if(demo)records=T.demoData(150);
+    else if(fileRows)records=T.normalizeRecords(fileRows);
+    else{
+      const src=$('#textIn').value;
+      if(!src.trim())throw new Error('ارفع ملفًا أو الصق بيانات.');
+      records=T.normalizeRecords(T.parseCSV(src));
+    }
+    const res=T.benfordLaw(records.map(r=>r.amount));
+    const maxv=Math.max(...res.obs,...res.exp)*100*1.1;
+    resBox.innerHTML=`
+      <section class="panel reveal">
+        <div class="report-head">
+          <div><h2>تقرير تحليل قانون بنفور</h2><small>ديوان المُراجِع — ${T.AUDITOR.name}، ${T.AUDITOR.title}</small></div>
+          <div><small>تاريخ التقرير</small><b>${T.todayAr()}</b></div>
+        </div>
+        <div class="verdict ${res.grade}">
+          <div><small>النتيجة على ${res.n} رقمًا · مؤشر الانحراف MAD = ${res.mad.toFixed(4)}</small><h2>${res.verdict}</h2></div>
+        </div>
+        <div class="legend">
+          <span><i class="lg obs"></i>التوزيع الفعلي</span>
+          <span><i class="lg exp"></i>توزيع بنفور المتوقع</span>
+        </div>
+        <div class="bchart">
+          ${res.obs.map((o,i)=>`
+            <div class="brow">
+              <span class="d">${i+1}</span>
+              <div class="track"><i class="obs" style="width:${(o*100/maxv*100).toFixed(1)}%"></i></div>
+              <div class="track"><i class="exp" style="width:${(res.exp[i]*100/maxv*100).toFixed(1)}%"></i></div>
+              <span class="cval">${(o*100).toFixed(1)}٪</span>
+            </div>`).join('')}
+        </div>
+        <div class="sig-line">
+          <div><b>${T.AUDITOR.name}</b>${T.AUDITOR.title}</div>
+          <div>التوقيع: ______________________</div>
+        </div>
+      </section>
+      <div class="form-row no-print">
+        <span></span>
+        <div class="actions"><button class="btn" type="button" onclick="window.print()">طباعة التقرير / حفظ PDF</button></div>
+      </div>`;
+  }catch(err){errBox.textContent='⚠ '+err.message;errBox.style.display='block';}
+}
+</script>
+</body>
+</html>
