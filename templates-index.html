@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}الرئيسية — ديوان المُراجِع{% endblock %}
+{% block content %}
+
+<section class="hero reveal">
+  <div class="hero-txt">
+    <span class="eyebrow">منصّة تدقيق مالي · خوارزميات غير مُشرِفة</span>
+    <h1>أدواتٌ ذكية<br>بين يدَي <em>المُراجِع</em></h1>
+    <p class="lead">افحص الفواتير، اعزل العمليات الشاذة، اختبر قانون بنفور، وجمّع المعاملات إلى شرائح — كل ذلك دون الحاجة إلى أي بيانات مُصنَّفة مسبقًا.</p>
+    <div class="hero-cta">
+      <a class="btn" href="{{ url_for('scanner') }}">ابدأ بماسح الفواتير</a>
+      <a class="btn ghost" href="#how">كيف تعمل الخوارزميات؟</a>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="num" data-n="5" style="--to:5"></span><small>أدوات تدقيق</small></div>
+      <div class="stat"><span class="num" data-n="4" style="--to:4"></span><small>خوارزميات غير مُشرِفة</small></div>
+      <div class="stat"><span class="num" data-n="200" style="--to:200"></span><small>شجرة عزل لكل فحص</small></div>
+      <div class="stat"><span class="num" data-n="100" style="--to:100"></span><small>٪ خصوصية البيانات</small></div>
+    </div>
+    <p class="fine">تتم المعالجة كاملةً داخل خادم التطبيق، ولا يُرسَل أي شيء إلى خدمات خارجية.</p>
+  </div>
+
+  <div class="hero-vis" aria-hidden="true">
+    <div class="sheet">
+      <div class="beam"></div>
+      <div class="shead"><b>سجلّ الفواتير</b><span>جارٍ الفحص…</span></div>
+      <div class="srow"><span>INV-1001 · شركة النخيل</span><b>4,800</b></div>
+      <div class="srow"><span>INV-1002 · مؤسسة الأفق</span><b>2,450</b></div>
+      <div class="srow"><span>INV-1003 · مصنع البحر</span><b>7,300</b></div>
+      <div class="srow flag"><span>INV-1021 · مؤسسة الأفق</span><b>97,500</b></div>
+      <div class="srow"><span>INV-1004 · دار الصرح</span><b>1,150</b></div>
+      <div class="srow flag"><span>INV-1022 · دار الصرح</span><b>13.50</b></div>
+      <div class="srow"><span>INV-1005 · شركة المدى</span><b>3,600</b></div>
+      <div class="stot"><span>نتيجة الفحص</span><b>2 من 7 تحتاج مراجعة</b></div>
+    </div>
+  </div>
+</section>
+
+<section class="reveal" style="animation-delay:.1s">
+  <h2 class="sec-title">عُدّة المُراجِع</h2>
+  <div class="grid">
+    <article class="tcard" data-num="٠٢">
+      <span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></span>
+      <h3>ماسح الفواتير</h3>
+      <p>عزل الفواتير المشبوهة عبر غابات العزل (Isolation Forest) مع درجة خطورة لكل فاتورة.</p>
+      <a class="more" href="{{ url_for('scanner') }}">افتح الأداة ←</a>
+    </article>
+    <article class="tcard" data-num="٠٣">
+      <span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12l6-6"/></svg></span>
+      <h3>كشف العمليات الشاذة</h3>
+      <p>درجة خطورة مجمّعة لكل قيد من ثلاث طرق: العزل، Z-Score، والمدى الربيعي IQR.</p>
+      <a class="more" href="{{ url_for('anomaly') }}">افتح الأداة ←</a>
+    </article>
+    <article class="tcard" data-num="٠٤">
+      <span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V4M4 20h16"/><path d="M8 16v-5M12 16V7M16 16v-3M20 16V9"/></svg></span>
+      <h3>تحليل قانون بنفور</h3>
+      <p>مقارنة توزيع الرقم الأول في المبالغ بالتوزيع المتوقع إحصائيًا، مع مؤشر MAD.</p>
+      <a class="more" href="{{ url_for('benford') }}">افتح الأداة ←</a>
+    </article>
+    <article class="tcard" data-num="٠٥">
+      <span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="9" r="2.4"/><circle cx="11" cy="16" r="2.6"/></svg></span>
+      <h3>تجميع المعاملات</h3>
+      <p>تقسيم العمليات إلى شرائح متجانسة بخوارزمية K-Means لفهم بنية السجل المحاسبي.</p>
+      <a class="more" href="{{ url_for('clustering') }}">افتح الأداة ←</a>
+    </article>
+    <article class="tcard" data-num="٠٦">
+      <span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></span>
+      <h3>عيّنات التدقيق</h3>
+      <p>اختيار العينة: عشوائي بسيط، منتظم، أو العينة القائمة على الوحدات النقدية MUS.</p>
+      <a class="more" href="{{ url_for('sampling') }}">افتح الأداة ←</a>
+    </article>
+  </div>
+</section>
+
+<section id="how" class="how reveal" style="animation-delay:.15s">
+  <h2 class="sec-title">كيف يعمل التعلّم غير المُشرِف؟</h2>
+  <ol class="steps">
+    <li><b>١</b><h3>إدخال البيانات</h3><p>ارفع ملف CSV أو الصق السجل المحاسبي مباشرة في أي أداة.</p></li>
+    <li><b>٢</b><h3>استكشاف الأنماط</h3><p>تبني الخوارزمية صورة عن «السلوك الطبيعي» للسجل دون أي أمثلة مُعلَّمة.</p></li>
+    <li><b>٣</b><h3>عزل الشواذ</h3><p>كل عملية بعيدة عن النمط تُرفع إليك مع درجة خطورة لتقدير الإجراء المهني.</p></li>
+  </ol>
+  <div class="chips">
+    <span>Isolation Forest</span><span>K-Means</span><span>Z-Score / IQR</span><span>Benford's Law</span><span>MUS Sampling</span>
+  </div>
+</section>
+
+{% endblock %}

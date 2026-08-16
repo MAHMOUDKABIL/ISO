@@ -1,0 +1,15 @@
+auditor-diwan/
+├── app.py
+├── requirements.txt
+├── README.md
+├── sample.csv
+├── static/
+│   └── style.css
+└── templates/
+    ├── base.html
+    ├── index.html
+    ├── scanner.html
+    ├── anomaly.html
+    ├── benford.html
+    ├── clustering.html
+    └── sampling.html

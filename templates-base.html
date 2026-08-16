@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}ديوان المُراجِع{% endblock %}</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%230B1F3F'/><text x='32' y='45' font-size='36' text-anchor='middle' fill='white'>د</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="shell">
+
+  <aside class="side">
+    <a class="brand" href="{{ url_for('index') }}">
+      <span class="brand-mark">د</span>
+      <span class="brand-txt">ديوان المُراجِع<small>أدوات تدقيق ذكية</small></span>
+    </a>
+    <nav>
+      {% for item in nav %}
+      <a href="{{ url_for(item.endpoint) }}"
+         class="{{ 'active' if request.endpoint == item.endpoint }}">
+        <b>{{ item.num }}</b><span>{{ item.label }}</span>
+      </a>
+      {% endfor %}
+    </nav>
+    <div class="side-foot">تعلّم آلي <u>غير مُشرِف</u><br>Python · Flask · CSS</div>
+  </aside>
+
+  <main class="main">
+    {% block content %}{% endblock %}
+    <footer class="foot">
+      <span>ديوان المُراجِع — أداة مساندة، ولا تغني عن الحكم المهني للمراجع.</span>
+      <span>Python × CSS</span>
+    </footer>
+  </main>
+
+</div>
+</body>
+</html>

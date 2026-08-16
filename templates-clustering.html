@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}تجميع المعاملات — ديوان المُراجِع{% endblock %}
+{% block content %}
+
+<header class="page-head" data-num="٠٥">
+  <span class="crumb">العُدّة / التقسيم والتجميع</span>
+  <h1>تجميع المعاملات</h1>
+  <p>خوارزمية <b>K-Means</b> تقسم السجل إلى شرائح متجانسة حسب قيمة العمليات، لفهم بنية الحساب وتحديد الشريحة الأولى بالفحص.</p>
+</header>
+
+<form class="panel reveal" method="post" enctype="multipart/form-data">
+  <div class="form-grid">
+    <label class="drop">
+      <input type="file" name="file" accept=".csv,.txt" hidden>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 16V4m0 0 4 4m-4-4L8 8"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+      <b>ارفع سجل العمليات (CSV)</b>
+      <small>أعمدة مقترحة: رقم، بيان، مبلغ</small>
+    </label>
+    <div class="field">
+      <label>أو الصق البيانات مباشرة</label>
+      <textarea name="text" rows="5" placeholder="INV-1,توريدات مكتبية,950&#10;INV-2,معدات,45000"></textarea>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="field small">
+      <label>عدد الشرائح (K)</label>
+      <select name="k">
+        <option value="2">شريحتان</option>
+        <option value="3" selected>3 شرائح</option>
+        <option value="4">4 شرائح</option>
+        <option value="5">5 شرائح</option>
+      </select>
+    </div>
+    <div class="actions">
+      <button class="btn" type="submit">تجميع البيانات</button>
+      <button class="btn ghost" type="submit" name="demo" value="1">تجربة ببيانات جاهزة</button>
+    </div>
+  </div>
+</form>
+
+{% if error %}<div class="alert">{{ error }}</div>{% endif %}
+
+{% if result %}
+<section class="clusters reveal">
+  {% for c in result.clusters %}
+  <article class="cl">
+    <header><h3>{{ c.name }}</h3><small>{{ c.count }} عملية</small></header>
+    <div class="body">
+      <dl>
+        <dt>الإجمالي</dt><dd>{{ "{:,.0f}".format(c.total) }}</dd>
+        <dt>المتوسط</dt><dd>{{ "{:,.0f}".format(c.avg) }}</dd>
+        <dt>أكبر عملية</dt><dd>{{ "{:,.0f}".format(c.max) }}</dd>
+        <dt>مثال</dt><dd>{{ c.max_label }}</dd>
+      </dl>
+      <div class="sharebar" title="نسبة الشريحة من الإجمالي"><i style="width:{{ c.share | round(1) }}%"></i></div>
+      <small class="share-txt">{{ c.share | round(1) }}٪ من إجمالي القيم</small>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% endblock %}
