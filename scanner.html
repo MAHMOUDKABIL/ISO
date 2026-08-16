@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ماسح الفواتير — ديوان المُراجِع</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">د</span>
+      <span class="brand-txt">ديوان المُراجِع<small>أدوات تدقيق ذكية</small></span>
+    </a>
+    <nav>
+      <a href="index.html"><b>٠١</b><span>الرئيسية</span></a>
+      <a href="scanner.html"><b>٠٢</b><span>ماسح الفواتير</span></a>
+      <a href="anomaly.html"><b>٠٣</b><span>كشف العمليات الشاذة</span></a>
+      <a href="benford.html"><b>٠٤</b><span>تحليل قانون بنفور</span></a>
+      <a href="clustering.html"><b>٠٥</b><span>تجميع المعاملات</span></a>
+      <a href="sampling.html"><b>٠٦</b><span>عيّنات التدقيق</span></a>
+    </nav>
+    <div class="side-foot">تعلّم آلي <u>غير مُشرِف</u><br>Vanilla JS · CSS</div>
+  </aside>
+
+  <main class="main">
+    <header class="page-head" data-num="٠٢">
+      <span class="crumb">العُدّة / فحص الفواتير</span>
+      <h1>ماسح الفواتير الذكي</h1>
+      <p>خوارزمية <b>Isolation Forest</b> تبني 150 شجرة عزل لاكتشاف الفواتير الخارجة عن نمط السجل — دون أي بيانات مُصنَّفة.</p>
+    </header>
+
+    <form class="panel reveal" id="scanForm">
+      <div class="form-grid">
+        <label class="drop" id="dropZone">
+          <input type="file" id="fileIn" accept=".csv,.txt" hidden>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 16V4m0 0 4 4m-4-4L8 8"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          <b>ارفع ملف CSV</b>
+          <small>أعمدة مقترحة: رقم الفاتورة، المورد، المبلغ</small>
+        </label>
+        <div class="field">
+          <label>أو الصق البيانات مباشرة</label>
+          <textarea id="textIn" rows="5" placeholder="رقم الفاتورة,المورد,المبلغ&#10;INV-1001,شركة النخيل,4800&#10;INV-1002,مؤسسة الأفق,2450"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field small">
+          <label>حساسية الفحص (نسبة الشواذ)</label>
+          <select id="contamination">
+            <option value="0.05">منخفضة — 5%</option>
+            <option value="0.08" selected>قياسية — 8%</option>
+            <option value="0.12">مرتفعة — 12%</option>
+            <option value="0.15">قصوى — 15%</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button class="btn" type="submit">تحليل الفواتير</button>
+          <button class="btn ghost" type="button" id="demoBtn">تجربة ببيانات جاهزة</button>
+        </div>
+      </div>
+    </form>
+
+    <div id="error" class="alert" style="display:none"></div>
+    <div id="result"></div>
+
+    <footer class="foot">
+      <span>ديوان المُراجِع — أداة مساندة، ولا تغني عن الحكم المهني.</span>
+      <span>Vanilla JS × CSS</span>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const errBox = $('#error'), resBox = $('#result');
+let fileText = '';
+
+$('#dropZone').addEventListener('click', ()=> $('#fileIn').click());
+$('#fileIn').addEventListener('change', e=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => { fileText = ev.target.result; $('#dropZone b').textContent = '✓ ' + f.name; };
+  r.readAsText(f, 'utf-8');
+});
+
+$('#scanForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  runScan(false);
+});
+$('#demoBtn').addEventListener('click', ()=> runScan(true));
+
+function runScan(demo){
+  errBox.style.display='none'; resBox.innerHTML='';
+  try{
+    let records;
+    if(demo){
+      records = AuditorTools.demoData(60);
+    } else {
+      const src = fileText || $('#textIn').value;
+      if(!src.trim()) throw new Error('أدخل بيانات أو ارفع ملفًا.');
+      const {rows} = AuditorTools.parseCSV(src);
+      records = AuditorTools.normalizeRecords(rows);
+    }
+    const cont = parseFloat($('#contamination').value);
+    const scored = AuditorTools.isolationForest(records, cont);
+    scored.sort((a,b)=>b.score-a.score);
+    const flagged = scored.filter(r=>r.flag);
+    const total = AuditorTools.sum(scored.map(r=>r.amount));
+    const flagAmount = AuditorTools.sum(flagged.map(r=>r.amount));
+
+    resBox.innerHTML = `
+      <section class="kpis reveal">
+        <div class="kpi"><small>عدد الفواتير</small><b>${scored.length}</b></div>
+        <div class="kpi"><small>إجمالي المبالغ</small><b>${AuditorTools.fmt(total,0)}</b></div>
+        <div class="kpi"><small>فواتير مُشتبه بها</small><b>${flagged.length} <i class="sub">(${(flagged.length/scored.length*100).toFixed(1)}٪)</i></b></div>
+        <div class="kpi"><small>قيمة المشتبه بها</small><b>${AuditorTools.fmt(flagAmount,0)}</b></div>
+      </section>
+      <section class="panel reveal">
+        <h2 class="ptitle">نتائج الفحص <small>مرتّبة حسب درجة الخطورة — أعلى 100 صف</small></h2>
+        <div class="twrap">
+          <table class="tbl">
+            <thead><tr><th>رقم الفاتورة</th><th>المورد</th><th>المبلغ</th><th>درجة الخطورة</th><th>الحالة</th></tr></thead>
+            <tbody>
+              ${scored.slice(0,100).map(r=>`
+                <tr class="${r.flag?'hit':''}">
+                  <td>${r.id}</td>
+                  <td>${r.label}</td>
+                  <td class="num">${AuditorTools.fmt(r.amount,2)}</td>
+                  <td><div class="meter"><i style="width:${Math.round(r.score)}%"></i></div></td>
+                  <td>${r.flag?'<span class="badge hi">مُشتبه بها</span>':'<span class="badge lo">طبيعية</span>'}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </section>`;
+  }catch(err){
+    errBox.textContent = '⚠ ' + err.message;
+    errBox.style.display='block';
+  }
+}
+</script>
+</body>
+</html>

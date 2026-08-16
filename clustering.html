@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تجميع المعاملات — ديوان المُراجِع</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">د</span>
+      <span class="brand-txt">ديوان المُراجِع<small>أدوات تدقيق ذكية</small></span>
+    </a>
+    <nav>
+      <a href="index.html"><b>٠١</b><span>الرئيسية</span></a>
+      <a href="scanner.html"><b>٠٢</b><span>ماسح الفواتير</span></a>
+      <a href="anomaly.html"><b>٠٣</b><span>كشف العمليات الشاذة</span></a>
+      <a href="benford.html"><b>٠٤</b><span>تحليل قانون بنفور</span></a>
+      <a href="clustering.html"><b>٠٥</b><span>تجميع المعاملات</span></a>
+      <a href="sampling.html"><b>٠٦</b><span>عيّنات التدقيق</span></a>
+    </nav>
+    <div class="side-foot">تعلّم آلي <u>غير مُشرِف</u><br>Vanilla JS · CSS</div>
+  </aside>
+
+  <main class="main">
+    <header class="page-head" data-num="٠٥">
+      <span class="crumb">العُدّة / التقسيم والتجميع</span>
+      <h1>تجميع المعاملات</h1>
+      <p>خوارزمية <b>K-Means</b> تقسم السجل إلى شرائح متجانسة حسب قيمة العمليات، لفهم بنية الحساب وتحديد الشريحة الأولى بالفحص.</p>
+    </header>
+
+    <form class="panel reveal" id="clForm">
+      <div class="form-grid">
+        <label class="drop" id="dropZone">
+          <input type="file" id="fileIn" accept=".csv,.txt" hidden>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 16V4m0 0 4 4m-4-4L8 8"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          <b>ارفع سجل العمليات (CSV)</b>
+          <small>أعمدة مقترحة: رقم، بيان، مبلغ</small>
+        </label>
+        <div class="field">
+          <label>أو الصق البيانات مباشرة</label>
+          <textarea id="textIn" rows="5" placeholder="INV-1,توريدات مكتبية,950&#10;INV-2,معدات,45000"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field small">
+          <label>عدد الشرائح (K)</label>
+          <select id="kVal">
+            <option value="2">شريحتان</option>
+            <option value="3" selected>3 شرائح</option>
+            <option value="4">4 شرائح</option>
+            <option value="5">5 شرائح</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button class="btn" type="submit">تجميع البيانات</button>
+          <button class="btn ghost" type="button" id="demoBtn">تجربة ببيانات جاهزة</button>
+        </div>
+      </div>
+    </form>
+
+    <div id="error" class="alert" style="display:none"></div>
+    <div id="result"></div>
+
+    <footer class="foot">
+      <span>ديوان المُراجِع — أداة مساندة، ولا تغني عن الحكم المهني.</span>
+      <span>Vanilla JS × CSS</span>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const errBox = $('#error'), resBox = $('#result');
+let fileText = '';
+
+$('#dropZone').addEventListener('click', ()=> $('#fileIn').click());
+$('#fileIn').addEventListener('change', e=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => { fileText = ev.target.result; $('#dropZone b').textContent = '✓ ' + f.name; };
+  r.readAsText(f, 'utf-8');
+});
+
+$('#clForm').addEventListener('submit', e=>{ e.preventDefault(); run(false); });
+$('#demoBtn').addEventListener('click', ()=> run(true));
+
+function run(demo){
+  errBox.style.display='none'; resBox.innerHTML='';
+  try{
+    let records;
+    if(demo) records = AuditorTools.demoData(60);
+    else {
+      const src = fileText || $('#textIn').value;
+      if(!src.trim()) throw new Error('أدخل بيانات أو ارفع ملفًا.');
+      const {rows} = AuditorTools.parseCSV(src);
+      records = AuditorTools.normalizeRecords(rows);
+    }
+    const k = parseInt($('#kVal').value);
+    if(records.length < k*3) throw new Error('عدد الصفوف قليل نسبةً إلى عدد الشرائح المطلوب.');
+
+    const logAmt = Math.log1p.bind(Math);
+    const points = records.map(r=>[r.amount, logAmt(r.amount), Math.floor(Math.log10(Math.max(r.amount,1)))+1]);
+    const labels = AuditorTools.kmeans(points, k);
+    records = records.map((r,i)=>({...r, c:labels[i]}));
+
+    const order = [...new Set(labels)].sort((a,b)=>{
+      const ma = AuditorTools.mean(records.filter(r=>r.c===a).map(r=>r.amount));
+      const mb = AuditorTools.mean(records.filter(r=>r.c===b).map(r=>r.amount));
+      return mb-ma;
+    });
+    const names = ['الشريحة المرتفعة','الشريحة المتوسطة','الشريحة المنخفضة','الشريحة الصغرى','الشريحة الدنيا'];
+    const total = AuditorTools.sum(records.map(r=>r.amount));
+
+    const clusters = order.map((c,i)=>{
+      const g = records.filter(r=>r.c===c);
+      const top = g.reduce((a,b)=>a.amount>b.amount?a:b);
+      return {
+        name: names[i] || `الشريحة ${i+1}`,
+        count: g.length,
+        total: AuditorTools.sum(g.map(r=>r.amount)),
+        avg: AuditorTools.mean(g.map(r=>r.amount)),
+        share: AuditorTools.sum(g.map(r=>r.amount))/total*100,
+        max: top.amount,
+        maxLabel: top.label
+      };
+    });
+
+    resBox.innerHTML = `
+      <section class="clusters reveal">
+        ${clusters.map(c=>`
+          <article class="cl">
+            <header><h3>${c.name}</h3><small>${c.count} عملية</small></header>
+            <div class="body">
+              <dl>
+                <dt>الإجمالي</dt><dd>${AuditorTools.fmt(c.total,0)}</dd>
+                <dt>المتوسط</dt><dd>${AuditorTools.fmt(c.avg,0)}</dd>
+                <dt>أكبر عملية</dt><dd>${AuditorTools.fmt(c.max,0)}</dd>
+                <dt>مثال</dt><dd>${c.maxLabel}</dd>
+              </dl>
+              <div class="sharebar"><i style="width:${c.share.toFixed(1)}%"></i></div>
+              <small class="share-txt">${c.share.toFixed(1)}٪ من إجمالي القيم</small>
+            </div>
+          </article>`).join('')}
+      </section>`;
+  }catch(err){
+    errBox.textContent = '⚠ ' + err.message;
+    errBox.style.display='block';
+  }
+}
+</script>
+</body>
+</html>

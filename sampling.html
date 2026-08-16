@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>عيّنات التدقيق — ديوان المُراجِع</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">د</span>
+      <span class="brand-txt">ديوان المُراجِع<small>أدوات تدقيق ذكية</small></span>
+    </a>
+    <nav>
+      <a href="index.html"><b>٠١</b><span>الرئيسية</span></a>
+      <a href="scanner.html"><b>٠٢</b><span>ماسح الفواتير</span></a>
+      <a href="anomaly.html"><b>٠٣</b><span>كشف العمليات الشاذة</span></a>
+      <a href="benford.html"><b>٠٤</b><span>تحليل قانون بنفور</span></a>
+      <a href="clustering.html"><b>٠٥</b><span>تجميع المعاملات</span></a>
+      <a href="sampling.html"><b>٠٦</b><span>عيّنات التدقيق</span></a>
+    </nav>
+    <div class="side-foot">تعلّم آلي <u>غير مُشرِف</u><br>Vanilla JS · CSS</div>
+  </aside>
+
+  <main class="main">
+    <header class="page-head" data-num="٠٦">
+      <span class="crumb">العُدّة / المعاينة</span>
+      <h1>اختيار عيّنات التدقيق</h1>
+      <p>ثلاث منهجيات معتمدة: عشوائي بسيط، منتظم (Systematic)، والعينة القائمة على الوحدات النقدية (MUS) التي تُرجّح المفردات الكبيرة.</p>
+    </header>
+
+    <form class="panel reveal" id="spForm">
+      <div class="form-grid three">
+        <div class="field">
+          <label>حجم المجتمع (N)</label>
+          <input type="number" id="N" value="500" min="2">
+        </div>
+        <div class="field">
+          <label>حجم العينة (n)</label>
+          <input type="number" id="n" value="25" min="1">
+        </div>
+        <div class="field">
+          <label>طريقة الاختيار</label>
+          <select id="method">
+            <option value="simple">عشوائي بسيط</option>
+            <option value="systematic">منتظم (Systematic)</option>
+            <option value="mus">وحدات نقدية (MUS)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin-top:14px">
+        <label>المبالغ — مطلوبة فقط لطريقة الوحدات النقدية (سطر لكل مبلغ، أو مفصولة بفواصل)</label>
+        <textarea id="amounts" rows="3" placeholder="4800&#10;2450&#10;97500&#10;1200"></textarea>
+      </div>
+      <div class="form-row">
+        <span></span>
+        <div class="actions">
+          <button class="btn" type="submit">سحب العينة</button>
+        </div>
+      </div>
+    </form>
+
+    <div id="error" class="alert" style="display:none"></div>
+    <div id="result"></div>
+
+    <footer class="foot">
+      <span>ديوان المُراجِع — أداة مساندة، ولا تغني عن الحكم المهني.</span>
+      <span>Vanilla JS × CSS</span>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const errBox = $('#error'), resBox = $('#result');
+
+$('#spForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  errBox.style.display='none'; resBox.innerHTML='';
+  try{
+    const N = parseInt($('#N').value);
+    const n = parseInt($('#n').value);
+    const method = $('#method').value;
+    if(N<2 || n<1 || n>N) throw new Error('تحقق من الأرقام: يجب أن يكون حجم العينة بين 1 وحجم المجتمع.');
+
+    if(method==='mus'){
+      const raw = $('#amounts').value.trim();
+      if(!raw) throw new Error('عينة الوحدات النقدية (MUS) تحتاج إلى لصق المبالغ أولًا.');
+      const vals = raw.split(/[,\s;،٬]+/).map(s=>parseFloat(s.trim())).filter(v=>!isNaN(v)&&v>0);
+      if(!vals.length) throw new Error('لم أستخرج أي مبالغ صالحة من النص الملصوق.');
+      if(n>vals.length) throw new Error('حجم العينة أكبر من عدد المبالغ.');
+      const {picks, total, interval} = AuditorTools.musSample(vals, n);
+      resBox.innerHTML = `
+        <section class="panel reveal">
+          <h2 class="ptitle">العينة النقدية المختارة
+            <small>${picks.length} وحدة · إجمالي القيم ${AuditorTools.fmt(total,0)} · الفاصل النقدي ${AuditorTools.fmt(interval,0)}</small>
+          </h2>
+          <div class="twrap">
+            <table class="tbl">
+              <thead><tr><th>م</th><th>المفردة</th><th>المبلغ</th></tr></thead>
+              <tbody>
+                ${picks.map((p,i)=>`
+                  <tr><td>${i+1}</td><td>${p.label} (${p.id})</td><td class="num">${AuditorTools.fmt(p.amount,2)}</td></tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </section>`;
+    } else {
+      let sel, note;
+      if(method==='systematic'){
+        const {sel:s, k, start} = AuditorTools.systematicSample(N,n);
+        sel = s; note = `الفاصل المنتظم = ${k} ، ونقطة البداية العشوائية = ${start}`;
+      } else {
+        sel = AuditorTools.simpleSample(N,n);
+        note = 'اختيار عشوائي بسيط — لكل مفردة فرصة متساوية';
+      }
+      resBox.innerHTML = `
+        <section class="panel reveal">
+          <h2 class="ptitle">المفردات المختارة (${sel.length} من ${N})</h2>
+          <p class="note">${note}</p>
+          <div class="pick-grid">
+            ${sel.map((x,i)=>`<span class="pick"><b>${i+1}</b>${x}</span>`).join('')}
+          </div>
+        </section>`;
+    }
+  }catch(err){
+    errBox.textContent = '⚠ ' + err.message;
+    errBox.style.display='block';
+  }
+});
+</script>
+</body>
+</html>
