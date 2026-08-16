@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الفحص الذكي — ديوان المُراجِع</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="index.html"><span class="brand-mark">د</span><span class="brand-txt">ديوان المُراجِع<small>أدوات تدقيق احترافية</small></span></a>
+    <nav>
+      <a href="index.html"><b>٠١</b><span>الرئيسية</span></a>
+      <a href="scanner.html"><b>٠٢</b><span>الفحص الذكي</span></a>
+      <a href="benford.html"><b>٠٣</b><span>تحليل قانون بنفور</span></a>
+      <a href="ratios.html"><b>٠٤</b><span>النسب المالية</span></a>
+      <a href="duplicates.html"><b>٠٥</b><span>كشف التكرارات</span></a>
+      <a href="sampling.html"><b>٠٦</b><span>عيّنات التدقيق</span></a>
+    </nav>
+    <div class="side-foot"><b>إعداد: د. محمود الباز قابيل</b>محاسب ومراجع قانوني</div>
+  </aside>
+
+  <main class="main">
+    <header class="page-head" data-num="٠٢">
+      <span class="crumb">العُدّة / الفحص الذكي</span>
+      <h1>الفحص الذكي بثلاث خوارزميات</h1>
+      <p>تعمل ثلاث خوارزميات تعلم آلي <b>غير خاضعة للإشراف</b> معًا على نفس البيانات — غابة العزل، والتجميع K-Means، والشبكات العصبية Autoencoders — ويُدمج قرارها بنظام تصويت، مع <b>محرك قابلية تفسير</b> يوضح سبب عزل كل فاتورة.</p>
+    </header>
+
+    <section class="methods reveal">
+      <div class="method"><span class="w">40%</span><h4>غابة العزل</h4><small>Isolation Forest</small><p>150 شجرة عزل تكتشف العمليات الخارجة عن النمط دون بيانات مُصنَّفة.</p></div>
+      <div class="method"><span class="w">30%</span><h4>التجميع</h4><small>K-Means</small><p>يقسم السجل لمجموعات متجانسة ويعزل العمليات في المجموعات الصغيرة البعيدة عن مراكزها.</p></div>
+      <div class="method"><span class="w">30%</span><h4>الشبكات العصبية</h4><small>Autoencoders</small><p>شبكة إعادة بناء تتعلم النمط الطبيعي؛ الفواتير الشاذة تفشل الشبكة في إعادة بنائها.</p></div>
+    </section>
+
+    <form class="panel reveal no-print" id="scanForm">
+      <div class="form-grid">
+        <label class="drop" id="dropZone">
+          <input type="file" id="fileIn" accept=".xlsx,.xls,.csv,.txt" hidden>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 16V4m0 0 4 4m-4-4L8 8"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          <b>ارفع ملف البيانات</b>
+          <small>يدعم XLSX · XLS · CSV · TXT</small>
+        </label>
+        <div class="field">
+          <label>أو الصق البيانات مباشرة (CSV)</label>
+          <textarea id="textIn" rows="5" placeholder="رقم الفاتورة,المورد,المبلغ&#10;INV-1001,شركة النخيل,4800&#10;INV-1002,مؤسسة الأفق,2450"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field small">
+          <label>حساسية الفحص (نسبة العزل المتوقعة)</label>
+          <select id="contamination">
+            <option value="0.05">منخفضة — 5%</option>
+            <option value="0.08" selected>قياسية — 8%</option>
+            <option value="0.12">مرتفعة — 12%</option>
+            <option value="0.15">قصوى — 15%</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button class="btn" type="submit">تشغيل الفحص الذكي</button>
+          <button class="btn ghost" type="button" id="demoBtn">بيانات تجريبية</button>
+          <button class="btn ghost" type="button" id="tplXlsx">نموذج XLSX</button>
+          <button class="btn ghost" type="button" id="tplCsv">نموذج CSV</button>
+        </div>
+      </div>
+    </form>
+
+    <div id="error" class="alert" style="display:none"></div>
+    <div id="result"></div>
+
+    <footer class="foot">
+      <span><b>ديوان المُراجِع</b> — إعداد د. محمود الباز قابيل، محاسب ومراجع قانوني.</span>
+      <span>Vanilla JS × CSS</span>
+    </footer>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+const $=s=>document.querySelector(s),T=AuditorTools;
+const errBox=$('#error'),resBox=$('#result');
+let fileRows=null,last=null;
+
+$('#tplXlsx').addEventListener('click',T.downloadTemplateXLSX);
+$('#tplCsv').addEventListener('click',T.downloadTemplateCSV);
+$('#dropZone').addEventListener('click',()=>$('#fileIn').click());
+$('#dropZone').addEventListener('dragover',e=>{e.preventDefault();$('#dropZone').classList.add('dragover');});
+$('#dropZone').addEventListener('dragleave',()=>$('#dropZone').classList.remove('dragover'));
+$('#dropZone').addEventListener('drop',e=>{e.preventDefault();$('#dropZone').classList.remove('dragover');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);});
+$('#fileIn').addEventListener('change',e=>{if(e.target.files[0])loadFile(e.target.files[0]);});
+async function loadFile(f){
+  try{fileRows=await T.readWorkbook(f);
+    $('#dropZone b').textContent='✓ '+f.name;
+    $('#dropZone small').textContent=fileRows.length+' صفًا جاهزًا للفحص';
+  }catch(err){showError(err.message);}
+}
+$('#scanForm').addEventListener('submit',e=>{e.preventDefault();run(false);});
+$('#demoBtn').addEventListener('click',()=>run(true));
+function showError(msg){errBox.textContent='⚠ '+msg;errBox.style.display='block';resBox.innerHTML='';last=null;}
+
+async function run(demo){
+  errBox.style.display='none';resBox.innerHTML='';last=null;
+  try{
+    let records;
+    if(demo)records=T.demoData(60);
+    else if(fileRows)records=T.normalizeRecords(fileRows);
+    else{
+      const src=$('#textIn').value;
+      if(!src.trim())throw new Error('ارفع ملفًا أو الصق بيانات أو استخدم البيانات التجريبية.');
+      records=T.normalizeRecords(T.parseCSV(src));
+    }
+    if(records.length<5)throw new Error('الفحص يتطلب 5 صفوف على الأقل.');
+    last=T.tripleScan(records,parseFloat($('#contamination').value));
+    render();
+  }catch(err){showError(err.message);}
+}
+
+function render(){
+  const r=last;
+  const isoCount=r.rows.filter(x=>x.isoFlag).length;
+  const kmCount=r.rows.filter(x=>x.kmFlag).length;
+  const aeCount=r.rows.filter(x=>x.aeFlag).length;
+  const isoAmt=T.sum(r.isolated.map(x=>x.amount));
+  const verdict=r.isolated.length
+    ?`عزلت الخوارزميات ${r.isolated.length} فاتورة تتطلب فحصًا مستنديًا، منها ${r.isolated.filter(x=>x.votes>=2).length} فاتورة بإجماع خوارزميتين فأكثر.`
+    :'لم تُعزل أي فاتورة — السجل ضمن النمط الطبيعي.';
+
+  resBox.innerHTML=`
+    <section class="panel reveal">
+      <div class="report-head">
+        <div><h2>تقرير الفحص الذكي — ثلاث خوارزميات غير خاضعة للإشراف</h2><small>ديوان المُراجِع — ${T.AUDITOR.name}، ${T.AUDITOR.title}</small></div>
+        <div><small>تاريخ التقرير</small><b>${T.todayAr()}</b></div>
+      </div>
+
+      <div class="verdict ${r.isolated.length?(r.isolated.length>3?'bad':'warn'):'ok'}">
+        <div><small>الخلاصة المهنية — المنهجية: عزل 40٪ + تجميع 30٪ + شبكة عصبية 30٪ مع نظام تصويت</small><h2>${verdict}</h2></div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><small>عدد الفواتير</small><b>${r.n}</b></div>
+        <div class="kpi"><small>إجمالي المبالغ</small><b>${T.fmt(r.total,0)}</b></div>
+        <div class="kpi"><small>الفواتير المعزولة</small><b>${r.isolated.length} <i class="sub">(${(r.isolated.length/r.n*100).toFixed(1)}٪)</i></b></div>
+        <div class="kpi"><small>قيمة المعزولة</small><b>${T.fmt(isoAmt,0)}</b></div>
+        <div class="kpi"><small>مجموعات K-Means</small><b>${r.k}</b></div>
+      </div>
+
+      <div class="algo-chips">
+        <span>غابة العزل رصدت: <b>${isoCount}</b></span>
+        <span>K-Means رصدت: <b>${kmCount}</b></span>
+        <span>الشبكة العصبية رصدت: <b>${aeCount}</b></span>
+        <span>إجماع ≥ خوارزميتين: <b>${r.isolated.filter(x=>x.votes>=2).length}</b></span>
+      </div>
+
+      <h2 class="ptitle">نتائج الفحص وأسباب العزل <small>مرتبة حسب درجة الخطورة — محرك قابلية التفسير</small></h2>
+      <div class="twrap">
+        <table class="tbl">
+          <thead><tr><th>الرقم</th><th>البيان / المورد</th><th>المبلغ</th><th>الغابة</th><th>K-Means</th><th>العصبية</th><th>الإجماع</th><th>الخطورة</th><th>المستوى</th><th>أسباب العزل</th></tr></thead>
+          <tbody>
+            ${r.rows.slice(0,100).map(x=>{
+              const iso=x.votes>=2||x.risk>=70;
+              const[cls,tag]=T.riskLevel(x.risk);
+              return `<tr class="${iso?'hit':''}">
+                <td>${x.id}</td><td>${x.label}</td>
+                <td class="num">${T.fmt(x.amount,2)}</td>
+                <td><span class="badge ${x.isoFlag?'hi':'lo'}">${x.isoScore}٪</span></td>
+                <td><span class="badge ${x.kmFlag?'hi':'lo'}">${x.kmScore}٪</span></td>
+                <td><span class="badge ${x.aeFlag?'hi':'lo'}">${x.aeScore}٪</span></td>
+                <td><b>${x.votes}/3</b></td>
+                <td><div class="meter"><i style="width:${x.risk}%"></i></div></td>
+                <td><span class="badge ${cls}">${tag}</span></td>
+                <td><ul class="reasons">${iso?x.reasons.map(z=>`<li>${z}</li>`).join(''):'<li>طبيعية</li>'}</ul></td>
+              </tr>`;}).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sig-line">
+        <div><b>${T.AUDITOR.name}</b>${T.AUDITOR.title}</div>
+        <div>التوقيع: ______________________</div>
+      </div>
+    </section>
+    <div class="form-row no-print">
+      <span></span>
+      <div class="actions">
+        <button class="btn" type="button" id="expWord">تقرير Word</button>
+        <button class="btn" type="button" id="expExcel">تقرير Excel</button>
+        <button class="btn ghost" type="button" onclick="window.print()">طباعة / PDF</button>
+      </div>
+    </div>`;
+
+  $('#expWord').addEventListener('click',exportWordReport);
+  $('#expExcel').addEventListener('click',exportExcelReport);
+}
+
+function exportWordReport(){
+  const r=last;if(!r)return;
+  const isoRows=r.isolated.map(x=>`
+    <tr class="hit"><td>${x.id}</td><td>${x.label}</td><td>${T.fmt(x.amount,2)}</td>
+    <td>${x.isoScore}٪</td><td>${x.kmScore}٪</td><td>${x.aeScore}٪</td>
+    <td>${x.votes}/3</td><td>${x.risk}</td>
+    <td>${x.reasons.join(' • ')}</td></tr>`).join('');
+  T.exportWord('تقرير الفحص الذكي - ديوان المراجع',`
+    <h2>1. نطاق الفحص ومنهجيته</h2>
+    <p>فُحص ${r.n} فاتورة بإجمالي ${T.fmt(r.total,2)} باستخدام ثلاث خوارزميات تعلم آلي غير خاضعة للإشراف:
+    غابة العزل (وزن 40٪)، التجميع K-Means (وزن 30٪)، الشبكات العصبية Autoencoders (وزن 30٪)،
+    ويُعتمد العزل عند إجماع خوارزميتين فأكثر أو تجاوز درجة الخطورة 70.</p>
+    <h2>2. نتائج الفحص</h2>
+    <p>عدد الفواتير المعزولة: <b>${r.isolated.length}</b> (${(r.isolated.length/r.n*100).toFixed(1)}٪)
+    بقيمة إجمالية <b>${T.fmt(T.sum(r.isolated.map(x=>x.amount)),2)}</b>.</p>
+    <h2>3. الفواتير المعزولة وأسباب العزل</h2>
+    <table><thead><tr><th>الرقم</th><th>البيان</th><th>المبلغ</th><th>الغابة</th><th>K-Means</th><th>العصبية</th><th>الإجماع</th><th>الخطورة</th><th>أسباب العزل</th></tr></thead>
+    <tbody>${isoRows||'<tr><td colspan="9">لا توجد فواتير معزولة</td></tr>'}</tbody></table>
+    <h2>4. التوصية المهنية</h2>
+    <p>${r.isolated.length?'تُخضع الفواتير المعزولة أعلاه للفحص المستندي والتحقق من المستندات المؤيدة والعقود قبل الاعتماد.':'لا يلزم فحص إضافي بخلاف إجراءات المراجعة الاعتيادية.'}</p>`);
+}
+
+function exportExcelReport(){
+  const r=last;if(!r)return;
+  const head=['رقم الفاتورة','البيان/المورد','المبلغ','درجة غابة العزل','درجة K-Means','درجة الشبكة العصبية','الإجماع','درجة الخطورة','أسباب العزل'];
+  T.exportExcel('تقرير-الفحص-الذكي.xlsx',[
+    {name:'الفواتير المعزولة',widths:[14,28,14,14,12,16,10,12,70],
+     rows:[head,...r.isolated.map(x=>[x.id,x.label,x.amount,x.isoScore+'%',x.kmScore+'%',x.aeScore+'%',x.votes+'/3',x.risk,x.reasons.join(' • ')])]},
+    {name:'النتائج الكاملة',widths:[14,28,14,12,12,16,10,12],
+     rows:[['الرقم','البيان','المبلغ','الغابة','K-Means','العصبية','الإجماع','الخطورة'],
+       ...r.rows.map(x=>[x.id,x.label,x.amount,x.isoScore+'%',x.kmScore+'%',x.aeScore+'%',x.votes+'/3',x.risk])]},
+    {name:'ملخص الفحص',widths:[30,20],
+     rows:[['البيان','القيمة'],
+       ['تاريخ التقرير',T.todayAr()],['المُعد',T.AUDITOR.name+' — '+T.AUDITOR.title],
+       ['عدد الفواتير',r.n],['إجمالي المبالغ',r.total],
+       ['عدد المعزولة',r.isolated.length],
+       ['قيمة المعزولة',T.sum(r.isolated.map(x=>x.amount))],
+       ['نسبة العزل',(r.isolated.length/r.n*100).toFixed(1)+'%'],
+       ['المنهجية','Isolation Forest + K-Means + Autoencoders']]}
+  ]);
+}
+</script>
+</body>
+</html>
