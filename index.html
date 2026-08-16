@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مِرْصاد الفواتير — منصة الفحص غير المُشرف للفواتير الإلكترونية</title>
+<meta name="description" content="منصة بحثية لفحص الفواتير الإلكترونية باستخدام غابة العزل والتجميع والشبكات العصبية، مع تفسير XAI وتقارير Word وExcel. إعداد الباحث محمود الباز فوزي قابيل.">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="%230d3b2e"/><circle cx="32" cy="32" r="20" fill="none" stroke="%23c8912a" stroke-width="3" stroke-dasharray="5 4"/><text x="32" y="41" font-size="24" text-anchor="middle" fill="%23f3ede0" font-family="serif">م</text></svg>'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="ml.js"></script>
+<script src="app.js"></script>
+</head>
+<body>
+
+<div id="scrollbar" aria-hidden="true"></div>
+
+<!-- ══════════ الترويسة الرسمية ══════════ -->
+<header class="masthead">
+  <div class="topline">
+    <div class="wrap topline-in">
+      <span>وثيقة تشغيل بحثية · المرجع <b class="mono">MBZ-EINV-2025</b></span>
+      <span class="tl-mid">يعمل بالكامل داخل متصفحك — لا تُرسَل بياناتك إلى أي خادم</span>
+      <span>التاريخ: <b class="mono" id="todayDate"></b></span>
+    </div>
+  </div>
+
+  <div class="wrap head-in">
+    <div class="brand">
+      <svg class="seal" viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="ring" cx="60" cy="60" r="55" fill="none" stroke="#e0aa3e" stroke-width="2.5" stroke-dasharray="7 6"/>
+        <circle cx="60" cy="60" r="45" fill="none" stroke="#f3ede0" stroke-width="1.4"/>
+        <circle cx="60" cy="60" r="50" fill="none" stroke="#f3ede0" stroke-width="4" stroke-dasharray="1.5 11.6" opacity=".7"/>
+        <rect x="42" y="34" width="28" height="38" rx="2" fill="none" stroke="#f3ede0" stroke-width="2.4"/>
+        <path d="M48 44h16M48 51h16M48 58h9" stroke="#f3ede0" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="68" cy="68" r="11" fill="none" stroke="#e0aa3e" stroke-width="2.8"/>
+        <path d="M76 76l9 9" stroke="#e0aa3e" stroke-width="3.4" stroke-linecap="round"/>
+        <path d="M63.5 68l3.2 3.2 6-6.4" fill="none" stroke="#7ad3a4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <h1>مِرْصاد <span class="dot">الفواتير</span></h1>
+        <p class="tag">منظومة فحص <b>غير مُشرف</b> للفواتير الإلكترونية — عزل حالات الاشتباه، توجيه عينة المراجعة، وتفسير كل قرار بلغة المراجع المهني.</p>
+      </div>
+    </div>
+
+    <div class="researcher">
+      <span class="r-label">إعداد الباحث</span>
+      <strong class="r-name">محمود الباز فوزي قابيل</strong>
+      <span class="r-chip">لأغراض البحث العلمي فقط</span>
+      <a class="r-phone mono" dir="ltr" href="tel:01067777481">01067777481 ☎</a>
+    </div>
+  </div>
+
+  <nav id="nav">
+    <div class="wrap nav-in">
+      <a href="#lab">غرفة الفحص</a>
+      <a href="#results">النتائج</a>
+      <a href="#method">المنهجية</a>
+      <a href="#sampling">العينة العشوائية</a>
+      <a href="#reports">التقارير</a>
+      <a href="#about">عن المنصة</a>
+      <span class="nav-end"><span class="led" id="led"></span><span id="ledTxt">النظام جاهز</span><b class="mono ver">v1.0.0</b></span>
+    </div>
+  </nav>
+</header>
+
+<main>
+
+<!-- ══════════ ١ · غرفة الفحص ══════════ -->
+<section id="lab" class="wrap workbench">
+  <div class="wb-grid">
+
+    <aside class="panel rv">
+      <span class="panel-tab">الخطوة ١ — الإدخال</span>
+      <h2 class="p-title">رفع المستندات</h2>
+      <p class="p-sub">شيت Excel أو ملف JSON مُستخرج من منظومة الفاتورة الإلكترونية أو نظام ERP.</p>
+
+      <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="منطقة رفع الملف">
+        <svg viewBox="0 0 64 64" width="52" height="52" aria-hidden="true">
+          <rect x="14" y="8" width="30" height="42" rx="2" fill="none" stroke="#101d17" stroke-width="2.6"/>
+          <path d="M21 18h16M21 25h16M21 32h9" stroke="#101d17" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="42" cy="42" r="10" fill="#eef1ea" stroke="#c8912a" stroke-width="2.8"/>
+          <path d="M49.5 49.5L57 57" stroke="#c8912a" stroke-width="3.4" stroke-linecap="round"/>
+        </svg>
+        <strong>اسحب الملف هنا أو اضغط للاختيار</strong>
+        <span>الصيغ المدعومة: xlsx · xls · csv · json — الحد الموصى به 5000 صف</span>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="btnPick">اختيار ملف…</button>
+        <button class="btn ghost" id="btnDemoFile">تنزيل ملف تجريبي</button>
+        <button class="btn ghost" id="btnDemoLoad">تجربة فورية</button>
+      </div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.json" hidden>
+
+      <div id="fileMeta" class="file-meta" hidden>
+        <span class="fm-ico">🗎</span><span id="fileMetaTxt"></span>
+      </div>
+      <p class="tpl-note">الصف الأول المتوقع: <span class="mono">مسلسل · تفاصيل · نوع المستند · نسخة المستند · الحالة · تاريخ الإصدار · تاريخ التقديم · عملة الفاتورة · قيمة الفاتورة · ضريبة القيمة المضافة · إجمالى الفاتورة · الرقم الداخلى · الرقم الإلكترونى</span></p>
+
+      <hr class="rule">
+      <h3 class="o-title">معايير الفحص</h3>
+
+      <div class="opts">
+        <label class="opt">
+          <span>نسبة العزل المستهدفة (Contamination): <b class="mono" id="contVal">5٪</b></span>
+          <input type="range" id="optCont" min="1" max="15" value="5">
+        </label>
+        <label class="opt">
+          <span>نسبة العينة العشوائية ٪ <small>(معيار 530)</small></span>
+          <input type="number" id="optRand" min="1" max="25" value="5">
+        </label>
+        <label class="opt">
+          <span>بذرة التوليد (Seed) <small>لإمكانية إعادة الإجراء</small></span>
+          <input type="number" id="optSeed" value="20251126" class="mono">
+        </label>
+        <label class="opt chk-line">
+          <input type="checkbox" id="optExcl" checked>
+          <span>استبعاد الفواتير المعزولة من العينة العشوائية</span>
+        </label>
+      </div>
+
+      <h3 class="o-title">محركات الكشف <small>— تعمل مجتمعة</small></h3>
+      <div class="algos">
+        <label class="alg"><input type="checkbox" data-alg="iforest" checked><span class="box"></span>
+          <span class="alg-t">غابة العزل <i class="mono">Isolation Forest</i><small>عزل الشواذ بتقسيمات عشوائية؛ المسار الأقصر = اشتباه أعلى</small></span></label>
+        <label class="alg"><input type="checkbox" data-alg="kmeans" checked><span class="box"></span>
+          <span class="alg-t">التجميع <i class="mono">K-Means</i><small>البُعد عن مراكز العناقيد والانتماء لعناقيد ضيقة مؤشر اشتباه</small></span></label>
+        <label class="alg"><input type="checkbox" data-alg="nn" checked><span class="box"></span>
+          <span class="alg-t">شبكة عصبية <i class="mono">Autoencoder</i><small>خطأ إعادة البناء المرتفع = نمط عجزت الشبكة عن تعلّمه</small></span></label>
+      </div>
+
+      <button class="btn-start" id="btnStart" disabled>بدء عملية الاختبار ◀</button>
+      <button class="btn tiny ghost" id="btnReset">إعادة الضبط</button>
+    </aside>
+
+    <section class="panel rv">
+      <span class="panel-tab">الخطوة ٢ — خط السير</span>
+      <h2 class="p-title">مجرى الفحص المباشر</h2>
+
+      <ol class="stages" id="stages">
+        <li data-st="0"><span class="d"></span><span class="s-t">قراءة الملف واستخراج السمات</span><span class="s-m mono">—</span></li>
+        <li data-st="1"><span class="d"></span><span class="s-t">التطبيع القياسي <i class="mono">Standardization</i></span><span class="s-m mono">—</span></li>
+        <li data-st="2"><span class="d"></span><span class="s-t">غابة العزل — 120 شجرة</span><span class="s-m mono">—</span></li>
+        <li data-st="3"><span class="d"></span><span class="s-t">التجميع — تحديد k تلقائيًا</span><span class="s-m mono">—</span></li>
+        <li data-st="4"><span class="d"></span><span class="s-t">الشبكة العصبية — تدريب القارورة</span><span class="s-m mono">—</span></li>
+        <li data-st="5"><span class="d"></span><span class="s-t">الدمج الترجيحي وتفسير XAI</span><span class="s-m mono">—</span></li>
+        <li data-st="6"><span class="d"></span><span class="s-t">سحب العينة العشوائية وإعداد التقرير</span><span class="s-m mono">—</span></li>
+      </ol>
+
+      <div class="prog"><i id="progBar"></i></div>
+
+      <div class="console-wrap">
+        <div class="console-head">سجل التشغيل المباشر <span class="cursor">▮</span></div>
+        <div class="console" id="console" role="log" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- ══════════ ٢ · النتائج ══════════ -->
+<section id="results" hidden>
+  <div class="stats-band">
+    <div class="wrap stats-in">
+      <div class="stat"><span class="s-lbl">إجمالي المجتمع</span><b class="mono" id="statTotal">0</b></div>
+      <div class="stat"><span class="s-lbl">فواتير معزولة</span><b class="mono" id="statIso">0</b></div>
+      <div class="stat"><span class="s-lbl">العينة العشوائية</span><b class="mono" id="statRand">0</b></div>
+      <div class="stat"><span class="s-lbl">نسبة الاشتباه الفعلية</span><b class="mono" id="statRate">0٪</b></div>
+      <div class="stat"><span class="s-lbl">توافق الخوارزميات</span><b class="mono" id="statCons">0٪</b></div>
+      <div class="stat"><span class="s-lbl">أعلى درجة اشتباه</span><b class="mono" id="statTop">0</b></div>
+    </div>
+    <div class="wrap run-note" id="runNote"></div>
+  </div>
+
+  <div class="wrap results-grid">
+    <div class="panel chart-card rv">
+      <h3 class="c-title">توزيع درجات الاشتباه المركّبة</h3>
+      <div class="cv-wrap"><canvas id="histCanvas" height="240"></canvas><div class="tip" id="tipHist"></div></div>
+      <p class="c-note">الخط المتقطع الأحمر = حد العزل. الأعمدة الذهبية = المنطقة المشتبه فيها.</p>
+    </div>
+    <div class="panel chart-card rv">
+      <h3 class="c-title">القيمة × نسبة الضريبة <small>— اضغط نقطة لعرض التحليل</small></h3>
+      <div class="cv-wrap"><canvas id="scatCanvas" height="240"></canvas><div class="tip" id="tipScat"></div></div>
+      <p class="c-note">الخط الأفقي = النسبة المقررة 14٪. النقاط الحمراء = فواتير معزولة.</p>
+    </div>
+  </div>
+
+  <div class="wrap" id="reports">
+    <div class="panel table-panel rv">
+      <div class="tabs-row">
+        <div class="tabs">
+          <button class="tab active" data-tab="iso">الفواتير المعزولة <sup class="mono" id="cntIso">0</sup></button>
+          <button class="tab" data-tab="rand">العينة العشوائية <sup class="mono" id="cntRand">0</sup></button>
+          <button class="tab" data-tab="all">كامل المجتمع <sup class="mono" id="cntAll">0</sup></button>
+        </div>
+        <input type="search" id="tblSearch" class="tbl-search" placeholder="بحث برقم، تفاصيل، سبب…">
+      </div>
+
+      <div class="tbl-scroll">
+        <table class="ledger" id="ledger">
+          <thead>
+            <tr>
+              <th>م</th><th>الرقم الإلكترونى</th><th>التفاصيل</th><th>النوع</th><th>الحالة</th>
+              <th>الإصدار</th><th>القيمة</th><th>الضريبة</th><th>الإجمالى</th>
+              <th>الدرجة</th><th>أسباب العزل</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="tblBody"></tbody>
+        </table>
+      </div>
+
+      <div class="export-bar">
+        <span class="ex-note">التصدير يحافظ على <b>ترتيب الملف المرفوع</b> ويشمل أسباب العزل وتوصية المراجعة.</span>
+        <div class="btn-row">
+          <button class="btn gold" id="btnWord">⬇ تقرير Word</button>
+          <button class="btn gold" id="btnExcel">⬇ تقرير Excel</button>
+          <button class="btn" id="btnPrint">🖨 طباعة</button>
+          <button class="btn ghost" id="btnJson">{ } JSON</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ ٣ · المنهجية ══════════ -->
+<section id="method" class="wrap method">
+  <aside class="m-side rv">
+    <span class="kicker">المنهجية العلمية</span>
+    <h2>ثلاث طبقات غير مُشرفة<br>وقرار واحد مُفسَّر</h2>
+    <p>بدلًا من الاختيار العشوائي الذي يُبدد جهد المراجع على مجتمعٍ أغلبه سليم، تُنشئ المنصة <b>إجماعًا خوارزميًا</b> بين ثلاثة نماذج لا تحتاج أي بيانات موسومة، ثم تُترجم قرار العزل إلى أسباب مهنية يفهمها المراجع ويفحصها.</p>
+    <p class="m-note mono">unsupervised · no labels · reproducible</p>
+  </aside>
+
+  <div class="m-stack">
+    <article class="algo rv">
+      <span class="ghost">01</span>
+      <div class="a-body">
+        <h3>غابة العزل <i class="mono">Isolation Forest</i></h3>
+        <p>لا تُنشئ الغابة نموذجًا للسلوك الطبيعي، بل <b>تعزل</b> كل فاتورة بتقسيمات عشوائية متعاقبة. الفاتورة الشاذة تُعزل في مسار أقصر، ومن متوسط أطوال المسارات عبر 120 شجرة تُحتسب درجة الشذوذ:</p>
+        <p class="formula mono" dir="ltr">score(x) = 2^( −E[h(x)] / c(n) )</p>
+      </div>
+      <svg class="a-svg" viewBox="0 0 120 90" aria-hidden="true"><path d="M60 6v18M60 24L30 46M60 24l30 22M30 46L16 68M30 46l14 22M90 46l-12 22M90 46l12 22" fill="none" stroke="#101d17" stroke-width="2"/><circle cx="60" cy="6" r="4" fill="#c8912a"/><circle cx="30" cy="46" r="3.5" fill="#0d3b2e"/><circle cx="90" cy="46" r="3.5" fill="#0d3b2e"/><circle cx="16" cy="68" r="3.5" fill="#0d3b2e"/><circle cx="44" cy="68" r="5" fill="#b23a30"/><circle cx="78" cy="68" r="3.5" fill="#0d3b2e"/><circle cx="102" cy="68" r="3.5" fill="#0d3b2e"/></svg>
+    </article>
+
+    <article class="algo dark rv">
+      <span class="ghost">02</span>
+      <div class="a-body">
+        <h3>التجميع <i class="mono">K-Means++</i></h3>
+        <p>تُضغط الفواتير في فضاء سمات مقيَّس (القيمة، نسبة الضريبة، فارق التواريخ، التطابق الحسابي…) ثم تُجمَّع. مؤشر الاشتباه مركّب من <b>المسافة عن مركز العنقود</b> ومن الانتماء إلى <b>عناقيد ضيقة</b> لا يتجاوز حجمها 4٪ من المجتمع.</p>
+        <p class="formula mono" dir="ltr">k = clamp( ⌈√(n/3)⌉ , 3 , 8 )</p>
+      </div>
+      <svg class="a-svg" viewBox="0 0 120 90" aria-hidden="true"><g fill="#e0aa3e"><circle cx="28" cy="26" r="3.5"/><circle cx="36" cy="34" r="3.5"/><circle cx="24" cy="38" r="3.5"/></g><g fill="#7ad3a4"><circle cx="78" cy="22" r="3.5"/><circle cx="88" cy="30" r="3.5"/><circle cx="82" cy="38" r="3.5"/><circle cx="92" cy="18" r="3.5"/><circle cx="96" cy="34" r="3.5"/></g><g fill="#f3ede0"><circle cx="52" cy="66" r="3.5"/><circle cx="62" cy="72" r="3.5"/><circle cx="58" cy="58" r="3.5"/><circle cx="70" cy="64" r="3.5"/></g><circle cx="104" cy="66" r="5" fill="#b23a30"/></svg>
+    </article>
+
+    <article class="algo rv">
+      <span class="ghost">03</span>
+      <div class="a-body">
+        <h3>الشبكة العصبية <i class="mono">Autoencoder</i></h3>
+        <p>شبكة ضغط ذات قارورة عنق (13 سمة ← 4 خلايا كامنة ← 13 سمة) تتدرب على إعادة بناء الفواتير «المعتادة». ما تعجز عن إعادة بنائه — أي <b>خطأ إعادة بناء مرتفع</b> — هو النمط الخارج عن المألوف.</p>
+        <p class="formula mono" dir="ltr">anomalyᵢ = mean( (xᵢ − x̂ᵢ)² )</p>
+      </div>
+      <svg class="a-svg" viewBox="0 0 120 90" aria-hidden="true"><g stroke="#101d17" stroke-width="1.3" opacity=".55"><path d="M16 18L56 38M16 18L56 52M16 45L56 38M16 45L56 52M16 72L56 38M16 72L56 52M56 38l48-20M56 38l48 7M56 52l48-7M56 52l48 7"/></g><g fill="#0d3b2e"><circle cx="16" cy="18" r="4"/><circle cx="16" cy="45" r="4"/><circle cx="16" cy="72" r="4"/><circle cx="104" cy="18" r="4"/><circle cx="104" cy="45" r="4"/><circle cx="104" cy="72" r="4"/></g><circle cx="56" cy="38" r="5" fill="#c8912a"/><circle cx="56" cy="52" r="5" fill="#c8912a"/></svg>
+    </article>
+
+    <article class="algo xai rv">
+      <span class="ghost">XAI</span>
+      <div class="a-body">
+        <h3>التفسير المهني للقرار</h3>
+        <p>لكل فاتورة معزولة تُحتسب <b>إسهامات السمات</b> (Feature Attribution) وتُترجم إلى عبارات مراجعة: انحراف نسبة الضريبة، فجوة زمنية بين الإصدار والتقديم، عدم تطابق الإجمالي، تكرار الرقم الإلكترونى… مع درجة كل محرك على حدة، ليستند المراجع إلى سببٍ قابل للتوثيق لا إلى صندوق أسود.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ══════════ ٤ · العينة العشوائية ══════════ -->
+<section id="sampling" class="sampling">
+  <div class="wrap sampling-in rv">
+    <span class="kicker gold">متطلب امتثال</span>
+    <blockquote>«ينبغي أن تتاح لكل وحدة أخذ العينات فرصة معروفة وغير معدومة للاختيار»</blockquote>
+    <p class="s-src">— معيار المراجعة المصرى (530) «عينات المراجعة»، والفقرة المناظرة من المعايير الدولية ISA 530</p>
+    <div class="s-cols">
+      <p>تسحب المنصة <b>عينة عشوائية بسيطة</b> بنسبة قابلة للضبط (افتراضيًا 5٪) من كامل المجتمع، استقلالًا عن نتائج العزل، لتوفير التغطية الاحتمالية التي تشترطها معايير المراجعة المصرية عند تعميم النتائج على المجتمع.</p>
+      <div class="formula-box mono" dir="ltr">
+        n_sample = ⌈ N × 5٪ ⌉<br>
+        seed = 20251126 → reproducible
+      </div>
+    </div>
+    <p class="s-note">تثبيت بذرة التوليد يجعل السحب <b>قابلًا لإعادة الإجراء</b> خطوةً بخطوة، فيمكن توثيقه ضمن أوراق المراجعة بوصفه إجراءً رقابيًا يمكن تكراره بنفس النتيجة.</p>
+  </div>
+</section>
+
+<!-- ══════════ ٥ · عن المنصة ══════════ -->
+<section id="about" class="wrap about">
+  <div class="about-grid">
+    <div class="about-card rv">
+      <div class="avatar">م&nbsp;ب</div>
+      <div>
+        <span class="kicker">الباحث المسؤول</span>
+        <h3>محمود الباز فوزي قابيل</h3>
+        <p>أُعدت هذه المنصة <b>لأغراض البحث العلمي فقط</b> في موضوع توظيف خوارزميات التعلّم غير المُشرف في توجيه عينات مراجعة الفواتير الإلكترونية، ولا تُعد أداة اعتماد ضريبي أو بديلًا عن الحكم المهني للمراجع.</p>
+        <a class="phone-big mono" dir="ltr" href="tel:0106777481">☎ 01067777481</a>
+      </div>
+    </div>
+
+    <div class="rv">
+      <h3 class="o-title">ضوابط الاستخدام</h3>
+      <ol class="disclaimer">
+        <li>جميع عمليات الفحص تتم <b>محليًا داخل المتصفح</b>؛ لا يُرفع أي ملف إلى أي خادم.</li>
+        <li>النتائج مؤشرات اشتباه إحصائية تُوجّه التدقيق، والقرار النهائي للمراجع البشري وحده.</li>
+        <li>يُوصى بحفظ «بذرة التوليد» ونسب الفحص ضمن أوراق المراجعة لإمكانية إعادة الإجراء.</li>
+        <li>المنصة إصدار بحثي؛ تُستخدم على مسؤولية المستخدم ودون أي ضمانات تجارية.</li>
+      </ol>
+
+      <h3 class="o-title" style="margin-top:22px">أسئلة شائعة</h3>
+      <details class="faq"><summary>هل تغادر بياناتي الجهاز؟</summary><p>لا. القراءة والتحليل والتصدير كلها داخل المتصفح. يمكنك قطع الإنترنت بعد تحميل الصفحة وستعمل بكامل كفاءتها.</p></details>
+      <details class="faq"><summary>لماذا لا يعمل المحرك بخادم Python؟</summary><p>لأن الاستضافة على GitHub Pages ثابتة بلا خوادم، لذا كُتبت المحركات الثلاثة بجافاسكربت خالصة من الصفر. ويُرفَق سكربت <span class="mono">tools/verify_columns.py</span> اختياريًا للتحقق من قالب الشيت قبل الرفع.</p></details>
+      <details class="faq"><summary>هل تغني المنصة عن المراجعة اليدوية؟</summary><p>إطلاقًا. هي أداة <b>ترشيد</b>: تحصر جهد المراجع في عينة تستحق التدقيق بدل العشوائية، وتُرفق بكل عزل سببًا مهنيًا مكتوبًا.</p></details>
+      <details class="faq"><summary>ما الصيغة المثالية للملف؟</summary><p>شيت Excel صُدر من منظومة الفاتورة الإلكترونية أو الـERP بنفس رؤوس الجدول المذكورة في خطوة الإدخال، أو ملف JSON بمفاتيح مناظرة.</p></details>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════════ التذييل ══════════ -->
+<footer>
+  <div class="f-ghost" aria-hidden="true">مِرْصاد الفواتير</div>
+  <div class="wrap f-grid">
+    <div>
+      <b class="f-brand">مِرْصاد الفواتير</b>
+      <p>منصة بحثية للفحص غير المُشرف للفواتير الإلكترونية — إصدار 1.0.0 لعام 2025.</p>
+    </div>
+    <div>
+      <b class="f-brand">إعداد الباحث</b>
+      <p>محمود الباز فوزي قابيل<br>لأغراض البحث العلمي فقط<br><a class="mono" dir="ltr" href="tel:0106777481">01067777481</a></p>
+    </div>
+    <div>
+      <b class="f-brand">البنية التقنية</b>
+      <p>برمجة يدوية — HTML / CSS / JavaScript خالص، دون أي مكتبات تعلّم آلة جاهزة. أداة بايثون اختيارية للتحقق من القالب.</p>
+    </div>
+  </div>
+  <div class="f-bottom">وثيقة تشغيل بحثية · المرجع MBZ-EINV-2025 · تُستخدم على مسؤولية المستخدم</div>
+</footer>
+
+<!-- ══════════ درج تحليل الفاتورة ══════════ -->
+<div id="backdrop" hidden></div>
+<aside id="drawer" aria-hidden="true">
+  <header class="dr-head">
+    <div><span class="dr-k">بطاقة تحليل XAI</span><b class="mono" id="drSerial" dir="ltr"></b></div>
+    <button id="drClose" aria-label="إغلاق">✕</button>
+  </header>
+  <div class="dr-body">
+    <div class="dr-score"><span>درجة الاشتباه المركّبة</span><b class="mono" id="drScore"></b></div>
+    <div id="drBadges"></div>
+    <h4>درجات المحركات الثلاثة</h4>
+    <div id="drGauges"></div>
+    <h4>أسباب العزل — بصياغة مهنية</h4>
+    <ul id="drReasons" class="reasons"></ul>
+    <h4>بيانات المستند</h4>
+    <dl id="drMeta" class="dr-meta"></dl>
+    <h4>تعليق المراجع <small>(يُضمَّن في التصدير)</small></h4>
+    <textarea id="drMemo" rows="3" placeholder="اكتب ملاحظة التدقيق هنا…"></textarea>
+    <p class="dr-rec mono" id="drRec"></p>
+  </div>
+</aside>
+
+<div id="toasts" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="js/ml.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
